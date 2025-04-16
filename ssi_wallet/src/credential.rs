@@ -89,7 +89,7 @@ mod tests {
             "Indian Bank".to_string(),
             "16.04.2025".to_string(),
         );
-        save_vc_to_file(&verifiable_credential, "./vc");
+        let _ = save_vc_to_file(&verifiable_credential, "./vc");
         println!("{:?}", verifiable_credential);
     }
 }
