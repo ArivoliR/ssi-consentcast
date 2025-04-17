@@ -1,0 +1,69 @@
+mod wallet;
+// wallet-cli/src/main.rs
+
+use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
+use std::{fs::{self, File}, io::Write, path::{self, Path}};
+use uuid::Uuid;
+
+use wallet::*;
+
+#[derive(Parser)]
+#[command(name = "wallet-cli")]
+#[command(about = "SSI Wallet CLI for DID, Credential & ZK Proof Management", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Initialize a new wallet and generate a DID
+    Init {},
+
+    /// Import a VC JSON file into the wallet
+    ImportVc {
+        #[arg(short, long)]
+        path: String,
+    },
+
+    /// List all stored credentials
+    List {},
+
+    /// Derive ZK proof for a credential using proof request
+    DeriveProof {
+        #[arg(short, long)]
+        vc_id: String,
+
+        #[arg(short, long)]
+        proof_request: String,
+
+        #[arg(short, long)]
+        output: String,
+    },
+}
+
+fn main() {
+    let cli = Cli::parse();
+    match &cli.command {
+        Commands::Init {} => {
+            todo!()
+        }
+        Commands::ImportVc { path } => {
+            if let Some(vc) = wallet::load_vc_from_file(path) {
+                println!("Loaded VC: {:?}", vc.credential_subject.name);
+            }
+            
+        }
+        Commands::List {} => {
+            todo!()
+        }
+        Commands::DeriveProof {
+            vc_id,
+            proof_request,
+            output,
+        } => {
+            todo!()
+        }
+    }
+}

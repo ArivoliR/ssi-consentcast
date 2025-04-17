@@ -1,10 +1,15 @@
+use bbs::ToVariableLengthBytes;
 use bbs::{keys::PublicKey, prelude::Signature};
 use serde::{Deserialize, Serialize};
+use serde::{ Deserializer,  Serializer};
+use base64::{engine::general_purpose, Engine};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-#[derive(Serialize, Deserialize, Debug)]
+use std::io::Read;
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+// #[derive(serde_derive::Serialize, serde_derive::Deserialize)]
 pub struct CredentialSubject {
     pub id: String, //users did
     pub name: String,
@@ -23,13 +28,16 @@ impl CredentialSubject {
         ]
     }
 }
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+
 pub struct VerifiableCredential {
     pub id: String,
     pub issuer: String, // "the bank"
     pub issuance_date: String,
     pub credential_subject: CredentialSubject,
+    #[serde(serialize_with = "serialize_signature", deserialize_with = "deserialize_signature")]
     pub signature: Signature,
+    #[serde(serialize_with = "serialize_public_key", deserialize_with = "deserialize_public_key")]
     pub public_key: PublicKey,
 }
 
@@ -62,19 +70,64 @@ impl VerifiableCredential {
             public_key,
         }
     }
+    pub fn save_vc_to_file(vc: &VerifiableCredential, path: &str) -> Result<(), std::io::Error> {
+        let serialized_vc = serde_json::to_string(vc).expect("Failed to serialize Verifiable Credential");
+        let mut file = File::create(Path::new(path))?;
+        file.write_all(serialized_vc.as_bytes())?;
+        Ok(())
+    }
+    pub fn load_vc_from_file(path: &str) -> Result<VerifiableCredential, Box<dyn std::error::Error>> {
+        let mut file = File::open(Path::new(path))?;
+        let mut data = String::new();
+        file.read_to_string(&mut data)?;
+        let vc: VerifiableCredential = serde_json::from_str(&data)?;
+        Ok(vc)
+    }
 }
 
-pub fn save_vc_to_file(vc: &VerifiableCredential, path: &str) -> std::io::Result<()> {
-    let json = serde_json::to_string_pretty(vc).expect("Failed to serialize Verifiable Credential");
-
-    let mut file = File::create(Path::new(path))?;
-    file.write_all(json.as_bytes())?;
-
-    Ok(())
+fn serialize_signature<S>(sig: &Signature, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let bytes = sig.to_bytes_uncompressed_form();
+    let encoded = general_purpose::STANDARD.encode(&bytes);
+    serializer.serialize_str(&encoded)
 }
+
+fn deserialize_signature<'de, D>(deserializer: D) -> Result<Signature, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let encoded: &str = Deserialize::deserialize(deserializer)?;
+    let bytes = general_purpose::STANDARD.decode(encoded)
+        .map_err(serde::de::Error::custom)?;
+    Signature::try_from(bytes.as_slice())
+        .map_err(serde::de::Error::custom)
+}
+
+fn serialize_public_key<S>(pk: &PublicKey, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let bytes = pk.to_bytes_uncompressed_form();
+    let encoded = general_purpose::STANDARD.encode(&bytes);
+    serializer.serialize_str(&encoded)
+}
+
+fn deserialize_public_key<'de, D>(deserializer: D) -> Result<PublicKey, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let encoded: &str = Deserialize::deserialize(deserializer)?;
+    let bytes = general_purpose::STANDARD.decode(encoded)
+        .map_err(serde::de::Error::custom)?;
+    PublicKey::from_bytes_uncompressed_form(&bytes)
+        .map_err(serde::de::Error::custom)
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::credential::save_vc_to_file;
+
 
     use super::VerifiableCredential;
 
@@ -89,7 +142,43 @@ mod tests {
             "Indian Bank".to_string(),
             "16.04.2025".to_string(),
         );
-        let _ = save_vc_to_file(&verifiable_credential, "./vc");
-        println!("{:?}", verifiable_credential);
+       let serialized_vc = serde_json::to_string(&verifiable_credential).unwrap();
+        // let vc: VerifiableCredential = serde_json::from_str(&serialized_vc).unwrap();
+
+        let deserialized_vc: VerifiableCredential = serde_json::from_str(&serialized_vc).unwrap();
+        assert_eq!(deserialized_vc, verifiable_credential);
+        
     }
-}
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::Path;
+    use std::io::Read;
+    #[test]
+    pub fn test_save_and_load_vc() {
+            let vc = VerifiableCredential::new(
+                "1".to_string(),
+                "arivoli".to_string(),
+                "23-11-2005".to_string(),
+                "IITM".to_string(),
+                "ABC1234".to_string(),
+                "Indian Bank".to_string(),
+                "16.04.2025".to_string(),
+            );
+
+            let file_path = "./test_vc.json";
+
+            // Save the Verifiable Credential to a file
+            VerifiableCredential::save_vc_to_file(&vc, file_path).unwrap();
+
+            // Load the Verifiable Credential from the file
+            let loaded_vc = VerifiableCredential::load_vc_from_file(file_path).expect("Failed to load Verifiable Credential");
+
+            // Assert that the loaded VC matches the original
+            assert_eq!(vc, loaded_vc);
+
+            // Clean up the test file
+            //TODO: remove this
+            // std::fs::remove_file(file_path).expect("Failed to delete test file");
+        }
+    }
+
