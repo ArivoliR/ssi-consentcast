@@ -20,7 +20,6 @@ pub fn generate_user_did() -> (String, String) {
 
 pub fn load_vc_from_file(path: &str) -> Option<VerifiableCredential> {
     let data = fs::read_to_string(Path::new(path)).unwrap();
-    println!("Data: {}", data);
     let vc: VerifiableCredential = serde_json::from_str(&data)
         .expect("Failed to deserialize Verifiable Credential");
     Some(vc)
