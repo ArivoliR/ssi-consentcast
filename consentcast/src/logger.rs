@@ -1,8 +1,9 @@
-use clap::ArgMatches;
-use serde::{Serialize, Deserialize};
-use std::fs::OpenOptions;
-use std::io::Write;
 use chrono::Utc;
+use clap::ArgMatches;
+use serde::{Deserialize, Serialize};
+use std::fs::{OpenOptions, create_dir_all};
+use std::io::Write;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConsentLog {
@@ -19,12 +20,26 @@ pub fn handle_record(matches: &ArgMatches) {
     let recipient = matches.get_one::<String>("recipient").unwrap().to_string();
     let fields = matches.get_one::<String>("fields").unwrap();
     let purpose = matches.get_one::<String>("purpose").unwrap().to_string();
-    let consent_given = matches.get_one::<String>("consent").unwrap().parse::<bool>().unwrap();
+    let consent_given = matches
+        .get_one::<String>("consent")
+        .unwrap()
+        .parse::<bool>()
+        .unwrap();
 
-    let pii_fields: Vec<String> = fields
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .collect();
+    // Use --output or default to logs/consent_logs.json
+    let output_path = matches
+        .get_one::<String>("output")
+        .map(|s| s.as_str())
+        .unwrap_or("logs/consent_logs.json");
+
+    // Create parent directory if needed
+    if let Some(parent) = Path::new(output_path).parent() {
+        if !parent.exists() {
+            create_dir_all(parent).expect("Failed to create logs directory");
+        }
+    }
+
+    let pii_fields: Vec<String> = fields.split(',').map(|s| s.trim().to_string()).collect();
 
     let log = ConsentLog {
         user_id,
@@ -40,10 +55,10 @@ pub fn handle_record(matches: &ArgMatches) {
     let mut file = OpenOptions::new()
         .append(true)
         .create(true)
-        .open("consent_logs.json")
+        .open(output_path)
         .expect("Failed to open log file");
 
     writeln!(file, "{}", json).expect("Failed to write log");
 
-    println!("Consent recorded successfully.");
+    println!("✅ Consent recorded at: {}", output_path);
 }

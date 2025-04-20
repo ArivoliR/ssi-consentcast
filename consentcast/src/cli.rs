@@ -1,4 +1,3 @@
-//use clap::{Arg, ArgMatches, Command};
 use clap::{Arg, Command};
 
 pub fn build_cli() -> Command {
@@ -13,7 +12,8 @@ pub fn build_cli() -> Command {
                 .arg(Arg::new("recipient").long("recipient").required(true))
                 .arg(Arg::new("fields").long("fields").required(true))
                 .arg(Arg::new("purpose").long("purpose").required(true))
-                .arg(Arg::new("consent").long("consent").required(true)),
+                .arg(Arg::new("consent").long("consent").required(true))
+                .arg(Arg::new("output").long("output").required(true)),
         )
         .subcommand(
             Command::new("audit")

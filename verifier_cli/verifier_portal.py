@@ -3,7 +3,8 @@ import json
 import requests
 
 # 🔧 Page settings
-st.set_page_config(page_title="Verifier Portal", page_icon="🛡️", layout="centered")
+st.set_page_config(page_title="Verifier Portal",
+                   page_icon="🛡️", layout="centered")
 st.markdown("""
     <style>
     html, body, [class*="css"]  {

@@ -6,8 +6,11 @@ use serde::de::Error;
 use serde::{Deserialize, Serialize};
 use serde::{Deserializer, Serializer};
 use serde_json::json;
+use std::fs::create_dir_all;
+use std::process::Command;
 use std::{fs, net::SocketAddr};
 use tokio::net::TcpListener;
+
 #[derive(Serialize, Deserialize, Debug)]
 struct EncodedSignaturePok {
     #[serde(
@@ -16,10 +19,12 @@ struct EncodedSignaturePok {
     )]
     pub signature_pok: SignatureProof,
 }
+
 #[derive(Deserialize)]
 struct ProofRequestFromClien {
     reveal_indices: Vec<usize>,
 }
+
 #[derive(Serialize, Deserialize)]
 pub struct EncodedPublicKey {
     #[serde(
@@ -42,10 +47,12 @@ struct ProofBundle {
     )]
     pub nonce: ProofNonce,
 }
+
 fn load_public_key(path: &str) -> EncodedPublicKey {
     let data = fs::read_to_string(path).expect("Failed to read public_key.json");
     serde_json::from_str(&data).expect("Failed to deserialize public key")
 }
+
 async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_json::Value> {
     println!("Received indices: {:?}", req.reveal_indices);
 
@@ -59,7 +66,6 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
         nonce: nonce,
     };
 
-    // Serialize to JSON and forward to wallet
     let client = reqwest::Client::new();
     let response = client
         .post("http://localhost:8090/vc")
@@ -68,35 +74,30 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
         .await
         .expect("Failed to forward to wallet");
 
-    // Deserialize wallet's response (should also be a ProofBundle)
     let json = response.json::<serde_json::Value>().await.unwrap();
 
     let proof_json = &json["proof"];
-    println!("1");
     let pok: EncodedSignaturePok =
         serde_json::from_value(proof_json.clone()).expect("Invalid proof format");
     let encoded = serde_json::to_value(&pok).unwrap();
-    println!("2");
+
     let revealed_messages =
         Verifier::verify_signature_pok(&proof_request, &pok.signature_pok, &nonce).unwrap();
+
     let field_names = vec![
         "ID", "Name", "Phone", "Email", "Aadhar", "DOB", "Address", "PAN",
     ];
 
-    println!("3");
-    // Build a new JSON object with revealed field mappings
     let mut revealed_fields = serde_json::Map::new();
     revealed_fields.insert("Partial Signature".to_string(), encoded);
     for (i, msg) in revealed_messages.iter().enumerate() {
-        let index = req.reveal_indices[i]; // match revealed index
-
+        let index = req.reveal_indices[i];
         let bytes = msg.to_bytes_uncompressed_form();
         let trimmed = bytes
             .iter()
             .copied()
             .take_while(|&b| b != 0)
             .collect::<Vec<u8>>();
-
         let value = String::from_utf8(trimmed).unwrap_or("<invalid utf8>".to_string());
 
         if let Some(field_name) = field_names.get(index) {
@@ -104,7 +105,53 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
         }
     }
 
+    // Log to ConsentCast
+    log_to_consentcast(
+        "Arivoli",
+        "indianbank.com",
+        "KYC",
+        &json!(revealed_fields),
+        "/home/blazevfx/Documents/hackathon/scriptkiddies/consentcast/src/consent_logs.json",
+    );
+
     Json(json!(revealed_fields))
+}
+
+fn log_to_consentcast(
+    user: &str,
+    recipient: &str,
+    purpose: &str,
+    fields: &serde_json::Value,
+    output_path: &str,
+) {
+    let fields_string = fields.to_string();
+
+    let status = Command::new("cargo")
+        .arg("run")
+        .arg("--manifest-path")
+        .arg("/home/blazevfx/Documents/hackathon/scriptkiddies/consentcast/Cargo.toml")
+        .arg("--")
+        .arg("record")
+        .arg("--user")
+        .arg(user)
+        .arg("--recipient")
+        .arg(recipient)
+        .arg("--fields")
+        .arg(fields_string)
+        .arg("--purpose")
+        .arg(purpose)
+        .arg("--consent")
+        .arg("true")
+        .arg("--output")
+        .arg(output_path)
+        .status()
+        .expect("Failed to execute ConsentCast");
+
+    if status.success() {
+        println!("✅ ConsentCast logging succeeded.");
+    } else {
+        eprintln!("❌ ConsentCast logging failed.");
+    }
 }
 
 #[tokio::main]
@@ -117,6 +164,8 @@ async fn main() {
 
     serve(listener, app).await.unwrap();
 }
+
+// Serialization helpers
 fn serialize_public_key<S>(pk: &PublicKey, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -156,6 +205,7 @@ where
         .map_err(Error::custom)?;
     ProofRequest::from_bytes_uncompressed_form(&bytes).map_err(Error::custom)
 }
+
 pub fn serialize_proof_nonce<S>(nonce: &ProofNonce, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -175,6 +225,7 @@ where
         .map_err(Error::custom)?;
     ProofNonce::try_from(bytes).map_err(Error::custom)
 }
+
 pub fn serialize_proof_signature<S>(req: &SignatureProof, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
