@@ -13,7 +13,7 @@ source "$VENV_PATH/bin/activate"
 
 # Run both Streamlit apps in the background
 streamlit run "./bank-vc-issuer/app.py" --server.port 8501 &
-streamlit run "./ssi_wallet/verifier_portal.py" --server.port 8502 &
+streamlit run "./verifier_cli/verifier_portal.py" --server.port 8502 &
 
 # Run Rust CLIs in the background
 ./verifier_cli/target/release/verifier_cli &
