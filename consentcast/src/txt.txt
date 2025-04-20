@@ -1,0 +1,19 @@
+# Generate keys
+cargo run -- keygen
+
+# Record consent
+cargo run -- record --user user123 --recipient bank.com --fields pan,phone --purpose "KYC" --consent true
+
+# Audit logs
+cargo run -- audit --user user123
+
+# Sign the log
+cargo run -- sign --file consent_logs.json
+
+# Verify the signature later
+cargo run -- verify --file consent_logs.json
+
+# Optional: Hash or validate
+cargo run -- hash --file consent_logs.json
+cargo run -- validate --file consent_logs.json
+

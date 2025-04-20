@@ -1,0 +1,4 @@
+{"user_id":"user123","pii_fields":["pan","phone"],"recipient":"https://partner-api.com","purpose":"KYC Verification","timestamp":"2025-04-16T19:41:40.116856645+00:00","consent_given":true}
+{"user_id":"user1","pii_fields":["pan","phone"],"recipient":"bank.com","purpose":"kyc","timestamp":"2025-04-17T07:41:37.811511153+00:00","consent_given":true}
+{"user_id":"user123","pii_fields":["pan","phone"],"recipient":"bank.com","purpose":"KYC","timestamp":"2025-04-20T09:27:23.830134097+00:00","consent_given":true}
+{"user_id":"alice","pii_fields":["pan","email"],"recipient":"bank.com","purpose":"Loan Application","timestamp":"2025-04-20T15:38:08.087505758+00:00","consent_given":true}
