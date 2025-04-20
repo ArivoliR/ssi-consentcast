@@ -6,7 +6,7 @@ lsof -ti :8502 | xargs kill -9
 
 lsof -ti :8060 | xargs kill -9
 lsof -ti :8090 | xargs kill -9
-VENV_PATH="/home/abhinav/Documents/hackathon/scriptkiddies/bank-vc-issuer/env"
+VENV_PATH="/home/blazevfx/Documents/hackathon/scriptkiddies/bank-vc-issuer/env"
 
 # Activate venv
 source "$VENV_PATH/bin/activate"

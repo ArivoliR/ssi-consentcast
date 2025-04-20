@@ -34,7 +34,7 @@ struct ProofBundle {
     pub nonce: ProofNonce,
 }
 async fn get_vc(Json(req): Json<ProofBundle>) -> Json<Value> {
-    let path = "/home/abhinav/Documents/hackathon/scriptkiddies/credential.json";
+    let path = "/home/blazevfx/Documents/hackathon/scriptkiddies/credential.json";
 
     if let Some(vc) = wallet::load_vc_from_file(path) {
         let mut vc_json = serde_json::to_value(&vc).unwrap();

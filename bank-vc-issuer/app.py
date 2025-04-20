@@ -6,7 +6,8 @@ import subprocess
 import os
 
 # Hide Streamlit chrome and style the page
-st.set_page_config(page_title="Bank VC Issuer", page_icon="🏦", layout="centered")
+st.set_page_config(page_title="Bank VC Issuer",
+                   page_icon="🏦", layout="centered")
 st.markdown("""
   <style>
   #MainMenu, header, footer {visibility: hidden;}
@@ -60,13 +61,13 @@ st.write("Generate a Verifiable Credential with BBS+ Signature")
 
 # --- Form Section ---
 with st.form("vc_form", clear_on_submit=True):
-    name   = st.text_input("Full Name")
-    ph_no  = st.text_input("Phone Number")
-    email  = st.text_input("Email")
+    name = st.text_input("Full Name")
+    ph_no = st.text_input("Phone Number")
+    email = st.text_input("Email")
     aadhar = st.text_input("Aadhar Number")
-    dob    = st.date_input("Date of Birth", min_value=datetime.date(1900,1,1))
+    dob = st.date_input("Date of Birth", min_value=datetime.date(1900, 1, 1))
     address = st.text_area("Address")
-    pan     = st.text_input("PAN Number")
+    pan = st.text_input("PAN Number")
 
     submitted = st.form_submit_button("🚀 Issue VC")
 
@@ -91,7 +92,8 @@ if submitted:
     with open("vc_input.json", "w") as f:
         json.dump(vc_input, f)
 
-    result = subprocess.run(["/home/abhinav/Documents/hackathon/scriptkiddies/bank-vc-issuer/app/target/release/app"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["/home/blazevfx/Documents/hackathon/scriptkiddies/bank-vc-issuer/app/target/release/app"], capture_output=True, text=True)
 
     if result.returncode == 0 and os.path.exists("credential.json"):
         with open("credential.json") as f:

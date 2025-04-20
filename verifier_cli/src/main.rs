@@ -50,7 +50,7 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
     println!("Received indices: {:?}", req.reveal_indices);
 
     let nonce = Verifier::generate_proof_nonce();
-    let pk = load_public_key("/home/abhinav/Documents/hackathon/scriptkiddies/public_key");
+    let pk = load_public_key("/home/blazevfx/Documents/hackathon/scriptkiddies/public_key");
 
     let proof_request = Verifier::new_proof_request(&req.reveal_indices, &pk.pk).unwrap();
 
