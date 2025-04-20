@@ -91,7 +91,7 @@ if submitted:
     with open("vc_input.json", "w") as f:
         json.dump(vc_input, f)
 
-    result = subprocess.run(["./app/target/release/app"], capture_output=True, text=True)
+    result = subprocess.run(["/home/abhinav/Documents/hackathon/scriptkiddies/bank-vc-issuer/app/target/release/app"], capture_output=True, text=True)
 
     if result.returncode == 0 and os.path.exists("credential.json"):
         with open("credential.json") as f:

@@ -1,11 +1,11 @@
 use axum::{Json, Router, routing::post, serve};
-use serde_json::json;
 use base64::{Engine, engine::general_purpose};
 use bbs::{ProofNonce, ProofRequest, keys::PublicKey, prelude::Verifier};
 use bbs::{SignatureProof, ToVariableLengthBytes};
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
 use serde::{Deserializer, Serializer};
+use serde_json::json;
 use std::{fs, net::SocketAddr};
 use tokio::net::TcpListener;
 #[derive(Serialize, Deserialize, Debug)]
@@ -50,7 +50,7 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
     println!("Received indices: {:?}", req.reveal_indices);
 
     let nonce = Verifier::generate_proof_nonce();
-    let pk = load_public_key("../../bank-vc-issuer/public_key");
+    let pk = load_public_key("/home/abhinav/Documents/hackathon/scriptkiddies/public_key");
 
     let proof_request = Verifier::new_proof_request(&req.reveal_indices, &pk.pk).unwrap();
 
@@ -75,7 +75,7 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
     println!("1");
     let pok: EncodedSignaturePok =
         serde_json::from_value(proof_json.clone()).expect("Invalid proof format");
-
+    let encoded = serde_json::to_value(&pok).unwrap();
     println!("2");
     let revealed_messages =
         Verifier::verify_signature_pok(&proof_request, &pok.signature_pok, &nonce).unwrap();
@@ -86,6 +86,7 @@ async fn generate_proof(Json(req): Json<ProofRequestFromClien>) -> Json<serde_js
     println!("3");
     // Build a new JSON object with revealed field mappings
     let mut revealed_fields = serde_json::Map::new();
+    revealed_fields.insert("Partial Signature".to_string(), encoded);
     for (i, msg) in revealed_messages.iter().enumerate() {
         let index = req.reveal_indices[i]; // match revealed index
 

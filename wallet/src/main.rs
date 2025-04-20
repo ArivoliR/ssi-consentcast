@@ -1,7 +1,7 @@
 use axum::{Json, Router, routing::post, serve};
 use base64::{Engine, engine::general_purpose};
 use bbs::prelude::Verifier;
-use bbs::{signature, ProofNonce, ProofRequest, SignatureProof, ToVariableLengthBytes};
+use bbs::{ProofNonce, ProofRequest, SignatureProof, ToVariableLengthBytes, signature};
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
 use serde::{Deserializer, Serializer};
@@ -34,7 +34,7 @@ struct ProofBundle {
     pub nonce: ProofNonce,
 }
 async fn get_vc(Json(req): Json<ProofBundle>) -> Json<Value> {
-    let path = "./vc";
+    let path = "/home/abhinav/Documents/hackathon/scriptkiddies/credential.json";
 
     if let Some(vc) = wallet::load_vc_from_file(path) {
         let mut vc_json = serde_json::to_value(&vc).unwrap();
@@ -96,11 +96,11 @@ async fn get_vc(Json(req): Json<ProofBundle>) -> Json<Value> {
         //     println!("{:?}", str);
         // }
         // vc_json["verified"] = json!("Dummy");  // inject after conversion
-        let encoded_signature_pok = EncodedSignaturePok{signature_pok: signature_proof.clone()};
+        let encoded_signature_pok = EncodedSignaturePok {
+            signature_pok: signature_proof.clone(),
+        };
         let mut result = serde_json::Map::new();
-        result.insert("proof".to_string(), json!(encoded_signature_pok));  // ✅ raw struct if Serialize is implemented
-        
-
+        result.insert("proof".to_string(), json!(encoded_signature_pok)); // ✅ raw struct if Serialize is implemented
 
         Json(json!(result))
     } else {
