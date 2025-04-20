@@ -10,6 +10,7 @@ use bbs::{
 };
 
 fn to_fixed_32_bytes(input: &String) -> [u8; 32] {
+    println!("hi");
     let mut bytes = [0u8; 32]; // initialize with 0s
     let input_bytes = input.as_bytes(); // convert String to &[u8]
     let len = input_bytes.len().min(32); // handle strings longer than 32
@@ -26,10 +27,16 @@ pub fn sign_messages(
     public_key: &PublicKey,
     secret_key: &SecretKey,
 ) -> Signature {
-    let signature_messages: Vec<SignatureMessage> = messages
-        .iter()
-        .map(|msg| SignatureMessage::from(to_fixed_32_bytes(msg)))
-        .collect();
+    let mut signature_messages: Vec<SignatureMessage> = Vec::new();
+
+    for msg in messages {
+        let fixed_bytes = to_fixed_32_bytes(msg);
+        println!("{:?}", fixed_bytes);
+        let sig_msg = SignatureMessage::from(fixed_bytes);
+        println!("hello");
+        signature_messages.push(sig_msg);
+    }
+    println!("{:?}", signature_messages);
 
     Issuer::sign(&signature_messages, secret_key, public_key).expect("Could Not Sign Message")
 }

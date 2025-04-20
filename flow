@@ -1,0 +1,5 @@
+step 1 : start the bank vc issuance app, and then make a vc .
+step 2 : copy this so that the wallet can access it .
+step 3 : start the verifier streamlit app.
+step 4 : start the verifier backend
+step 5 : start the wallet backend
