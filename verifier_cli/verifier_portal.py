@@ -82,7 +82,7 @@ FIELD_LABELS = {
     7: "🆔 PAN Number"
 }
 
-st.title("🛡️ ConsentCast: Verifier Portal")
+st.title("🛡️ Verifier Portal - 3rd party App")
 st.markdown("Select which fields you want the user to disclose for verification:")
 
 # ✅ Tick boxes = indices
